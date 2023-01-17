@@ -11,7 +11,8 @@ different models. Furthermore, a real-life example is given of where this can be
 
 | Files/Folders 	| Description	|
 | ------------------	| ------------- |
-| Example.R		| R-script to run an example simulation study that uses simulated dichotomous questionnaire data|
+| Example.rmd		| Rmarkdown file that runs an example simulation study that uses simulated dichotomous questionnaire data |
+| Example.html		| Knitted version of the Rmarkdown file with the example simulation study |
 | Functions		| Folder containing annotated functions used to generate data by '1.Example.R'|
 | Example-Manuscript.pdf| A rendered LaTeX file that uses simulated dichotomous questionnaire data in their simulation study|
 | ...			| ... 	|
