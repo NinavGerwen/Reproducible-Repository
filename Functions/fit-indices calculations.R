@@ -51,18 +51,20 @@ sat.model <- function(agg_data, n_r) {
     n_x <- agg_data$fr[i]
     
     ## Get the relative frequency of the score pattern
-    pi[i] <- n_x / n_r
+    pi[i] <- log( n_x / n_r )
     
   }
   
   ## Then, the log likelihood is calculated by taking the log of the
   ## product of all relative frequencies
-  loglik <- log(prod(pi))
+  loglik <- sum(pi)
 
   ## And this value should be returned  
   return(loglik)
   
 }
+
+
 
 ## Then, to calculate the CFI, we have a function which takes as input:
 ## the loglikelihood of the tested model, the dataset,

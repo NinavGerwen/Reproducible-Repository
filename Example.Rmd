@@ -65,7 +65,7 @@ for(a in levels(test_length)){
         ## Then, for every condition, generate data according to the
         ## current condition
 
-          temp_data <- data.gen(n = temp_n, k = temp_k, model = "2PL")
+          temp_data <- data.gen(n = temp_n, k = temp_k, model = "3PL")
                         
           l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
           
@@ -77,6 +77,8 @@ for(a in levels(test_length)){
           tli_values[j] <- TLI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+          print(tli_values[j])
         
         }
       
