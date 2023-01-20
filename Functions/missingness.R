@@ -14,7 +14,7 @@ missify <- function(dataset, missingness){
       temp_value <- runif(n = 1, min = 0, max = 1)
       
       ## And if this value is smaller than the missingness rate desired
-      if(value <= missingness){
+      if(temp_value <= missingness){
         ## Replace the item with an NA
         dataset[i, j] <- NA
         ## Otherwise go to the next row-column element and repeat
@@ -23,5 +23,7 @@ missify <- function(dataset, missingness){
       }
      }
   }
+  
+  return(dataset)
 }
  

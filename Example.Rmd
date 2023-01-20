@@ -21,14 +21,38 @@ source("Functions/fit-indices calculations.R")
 
 ```
 
+
 ## Generating IRT data
 
+With these functions, we can now generate Item Response Theory (IRT) data in the following way:
+
 ```{r}
+## First set a seed for reproducibility
 set.seed(1248)
-test <- data.gen(n = 100, k = 5, model = "2PL")
+
+## And then make use of the data.gen function with a specified 
+## sample size, test length and model type to base the calculations on
+test_data <- data.gen(n = 100, k = 5, model = "2PL")
 ```
 
+In case we are interested in missing data, we can also make a percentage
+of our data missing by doing the following:
+
+```{r}
+## Again, set a seed for reproducibility
+set.seed(1248)
+
+## And use the missify() function, with the first argument the dataset
+## and the second argument the percentage of missing data you would like
+missing_test_data <- missify(test_data, .20)
+```
+
+
 ## Using generated IRT data in a simulation study
+
+Now, let us use these functions in a simulation study. More specifically,
+we will be evaluating the performance of two fit indices, the Tucker-Lewis Index and
+Comparative Fit Index, in the IRT framework.
 
 ```{r}
 ## LTM to fit the required models
@@ -41,12 +65,63 @@ require(magrittr)
 test_length <- as.factor(c(5, 10, 20))
 sample_size <- as.factor(c(200, 300, 500, 1000, 1500))
 
+test_length <- as.factor(c(5, 3, 4))
+sample_size <- as.factor(c(100, 150, 160, 180, 200))
+
+
 n_sim <- 10
 
 ## We vary three factors, and for the simulation study, we 
 ## cross-examine them through a nested for loop
 
-tli_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
+null_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
+                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA)
+
+set.seed(1248)
+
+for(a in levels(test_length)){
+
+  for(b in levels(sample_size)){
+    
+      tli_values <- rep(NA, n_sim)
+      cfi_values <- rep(NA, n_sim)
+      
+      temp_n <- as.numeric(as.character(b))
+      temp_k <- as.numeric(as.character(a))
+      
+        for(j in 1:n_sim){
+        ## Then, for every condition, generate data according to the
+        ## current condition
+
+          temp_data <- data.gen(n = temp_n, k = temp_k, model = "2PL")
+                        
+          l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
+          
+          aggr_data <- temp_data %>%
+                        as.data.frame(.) %>%
+                        mutate(fr = rep(1, temp_n)) %>%
+                        aggregate(fr ~ ., data = ., sum)
+          
+          tli_values[j] <- TLI(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+          cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+          print(tli_values[j])
+        }
+      
+      null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
+                                          mean(cfi_values), sd(cfi_values)))
+
+  }
+  
+}
+
+null_results <- null_results[-1 ,]
+rownames(null_results) <- NULL
+
+## Now for miss-specification condition:
+
+alt_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
                           TLI_SE = NA, CFI_M = NA, CFI_SE = NA)
 
 set.seed(1248)
@@ -79,19 +154,19 @@ for(a in levels(test_length)){
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
           print(tli_values[j])
+          
         
         }
       
-      tli_results <- rbind(tli_results, c(a, b, mean(tli_values), sd(tli_values),
+      alt_results <- rbind(alt_results, c(a, b, mean(tli_values), sd(tli_values),
                                           mean(cfi_values), sd(cfi_values)))
 
   }
   
 }
 
-tli_results <- tli_results[-1 ,]
-rownames(tli_results) <- NULL
-
+alt_results <- alt_results[-1 ,]
+rownames(alt_results) <- NULL
 
 ```
 
@@ -101,5 +176,53 @@ sessionInfo()
 ```
 
         
+```{r}
+set.seed(1248)
+
+for(a in levels(test_length)){
+
+  for(b in levels(sample_size)){
+    
+      tli_values <- rep(NA, n_sim)
+      cfi_values <- rep(NA, n_sim)
+      
+      temp_n <- as.numeric(as.character(b))
+      temp_k <- as.numeric(as.character(a))
+      
+        j <- 1
         
+        
+        while(j < n_sim + 1){
+        ## Then, for every condition, generate data according to the
+        ## current condition
+
+          temp_data <- data.gen(n = temp_n, k = temp_k, model = "2PL")
+                        
+          l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
+          
+          aggr_data <- temp_data %>%
+                        as.data.frame(.) %>%
+                        mutate(fr = rep(1, temp_n)) %>%
+                        aggregate(fr ~ ., data = ., sum)
+          
+          tli_values[j] <- TLI4(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+          cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+       
+          
+          j <- j + 1
+       
+        }
+      
+      null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
+                                          mean(cfi_values), sd(cfi_values)))
+
+  }
+  
+}
+
+null_results <- null_results[-1 ,]
+rownames(null_results) <- NULL
+```
 
