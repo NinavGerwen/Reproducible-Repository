@@ -29,7 +29,7 @@ base.model <- function(data) {
   ## The total likelihood is then the product of all these likelihoods
   loglik <- log(prod(pi))
   
-  print(loglik)
+  print(c("The baseline loglikelihood is ", loglik, ".") ) 
   
   ## Return the log of the likelihood
   return(loglik)
@@ -60,7 +60,8 @@ sat.model <- function(agg_data, n_r) {
   ## Then, the log likelihood is calculated by taking the log of the
   ## product of all relative frequencies
   loglik <- sum(pi)
-  
+
+  print(c("The saturated loglikelihood is ", loglik, ".") ) 
   ## And this value should be returned  
   return(loglik)
   
@@ -76,7 +77,7 @@ TLI <- function(testedlog, dataset, agg_data, n, k){
   ## The numerator is calculated by a chi-sq distribution
   numerator <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))/((2^k - 1) - 2*k)
   
-  denominator <- (2 * (testedlog - base.model(dataset)))/(k)
+  denominator <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))/((2^k - 1) - k)
   
   fit_value <- 1 - (numerator/denominator)
   
@@ -98,37 +99,7 @@ CFI <- function(testedlog, dataset, agg_data, n, k){
   
 }
 
-
-## Below are different variations of TLI that I tested
-TLI2 <- function(testedlog, dataset, agg_data, n, k){
-  
-  ## The numerator is calculated by a chi-sq distribution
-  numerator <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))/((2^k - 1) - 2*k)
-  
-  denominator <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))/((2^k - 1) - k)
-  
-  fit_value <- 1 - (numerator/denominator)
-  
-  return(fit_value)
-  
-  
-}
-
-TLI3 <- function(testedlog, dataset, agg_data, n, k){
-  
-  ## The numerator is calculated by a chi-sq distribution
-  numerator <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))/(2*k)
-  
-  denominator <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))/(k)
-  
-  fit_value <- 1 - (numerator/denominator)
-  
-  return(fit_value)
-  
-  
-}
-
-TLI4 <- function(testedlog, dataset, agg_data, n, k){
+TLI_Cai_Calc <- function(testedlog, dataset, agg_data, n, k){
   
   chi_base <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))
   

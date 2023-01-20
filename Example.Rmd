@@ -65,8 +65,8 @@ require(magrittr)
 test_length <- as.factor(c(5, 10, 20))
 sample_size <- as.factor(c(200, 300, 500, 1000, 1500))
 
-test_length <- as.factor(c(5, 3, 4))
-sample_size <- as.factor(c(100, 150, 160, 180, 200))
+#test_length <- as.factor(c(5, 3, 4))
+#sample_size <- as.factor(c(100, 150, 160, 180, 200))
 
 
 n_sim <- 10
@@ -106,7 +106,6 @@ for(a in levels(test_length)){
           
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
-          print(tli_values[j])
         }
       
       null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
