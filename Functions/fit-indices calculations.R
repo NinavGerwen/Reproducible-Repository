@@ -22,14 +22,15 @@ base.model <- function(data) {
     
     ## Determine the likelihood that this many items people
     ## scored the item correctly
-    pi[i] <- (pi_i)^n_i * (1 - (pi_i))^(n - n_i)
+    ##pi[i] <- log((pi_i)^n_i * (1 - (pi_i))^(n - n_i)
+    pi[i] <- n_i * log(pi_i) + n * log((1 - pi_i)) - n_i * log((1 - pi_i))
     
   }
   
   ## The total likelihood is then the product of all these likelihoods
-  loglik <- log(prod(pi))
+  loglik <- sum(pi)
   
-  print(c("The baseline loglikelihood is ", loglik, ".") ) 
+  ##print(c("The baseline likelihood is ", loglik, ".") ) 
   
   ## Return the log of the likelihood
   return(loglik)
@@ -61,7 +62,8 @@ sat.model <- function(agg_data, n_r) {
   ## product of all relative frequencies
   loglik <- sum(pi)
 
-  print(c("The saturated loglikelihood is ", loglik, ".") ) 
+
+  ## print(c("The saturated likelihood is ", loglik, ".") ) 
   ## And this value should be returned  
   return(loglik)
   
@@ -74,10 +76,17 @@ sat.model <- function(agg_data, n_r) {
 ## the aggregated dataset, number of observations and test length
 TLI <- function(testedlog, dataset, agg_data, n, k){
   
-  ## The numerator is calculated by a chi-sq distribution
-  numerator <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))/((2^k - 1) - 2*k)
+  chi_tested <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))
   
-  denominator <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))/((2^k - 1) - k)
+  df_tested <- 2*k ##((2^k - 1) - 2*k)
+  
+  chi_base <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))
+  
+  df_base <- k ##((2^k - 1) - k)
+  
+  numerator <- chi_tested / df_tested
+  
+  denominator <- chi_base / df_base
   
   fit_value <- 1 - (numerator/denominator)
   
@@ -89,9 +98,17 @@ TLI <- function(testedlog, dataset, agg_data, n, k){
 ## Then, to calculate the CFI:
 CFI <- function(testedlog, dataset, agg_data, n, k){
   
-  numerator <- (2 * (sat.model(agg_data, n_r = n) - testedlog)) - ((2^k - 1) - 2*k)
+  chi_tested <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))
+  
+  df_tested <- 2 * k ## ((2^k - 1) - 2*k) 
+  
+  chi_base <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))
+  
+  df_base <- k ## ((2^k - 1) - k) 
+  
+  numerator <- chi_tested - df_tested
     
-  denominator <- (2 * (testedlog - base.model(dataset))) - (k)
+  denominator <- chi_base - df_base
     
   fit_value <- 1 - (numerator/denominator)
   
@@ -103,11 +120,11 @@ TLI_Cai_Calc <- function(testedlog, dataset, agg_data, n, k){
   
   chi_base <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))
   
-  df_base <- ((2^k - 1) - k)
+  df_base <- k ## ((2^k - 1) - k)
   
   chi_tested <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))
   
-  df_tested <- ((2^k - 1) - 2*k)
+  df_tested <- 2*k ##((2^k - 1) - 2*k)
   
 
   numerator <- (chi_base / df_base) - (chi_tested / df_tested)
@@ -121,3 +138,28 @@ TLI_Cai_Calc <- function(testedlog, dataset, agg_data, n, k){
   
 }
 
+CFI_Cai_Calc <- function(testedlog, dataset, agg_data, n, k){
+  
+  chi_tested <- (2 * ((sat.model(agg_data, n_r = n) - testedlog)))
+  
+  df_tested <- 2*k ## ((2^k - 1) - 2*k)
+  
+  chi_base <- (2 * ((sat.model(agg_data, n_r = n) - base.model(dataset))))
+  
+  df_base <- k ##((2^k - 1) - k)
+  
+  ##numerator <- (chi_base - df_base) - (chi_tested - df_tested)
+    
+  ##denominator <- (chi_base - df_base)
+  
+  numerator <- max(c((chi_tested - df_tested), 0))
+  
+  denominator <- max(c((chi_base - df_base), (chi_tested - df_tested), 0))
+  
+  fit_value <- 1 - (numerator/denominator)
+  
+  ## fit_value <- (numerator/denominator)
+  
+  return(fit_value)
+  
+}

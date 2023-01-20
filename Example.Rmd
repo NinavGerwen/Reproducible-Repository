@@ -32,7 +32,7 @@ set.seed(1248)
 
 ## And then make use of the data.gen function with a specified 
 ## sample size, test length and model type to base the calculations on
-test_data <- data.gen(n = 100, k = 5, model = "2PL")
+test_data <- data.gen(n = 1500, k = 5, model = "2PL")
 ```
 
 In case we are interested in missing data, we can also make a percentage
@@ -69,13 +69,14 @@ sample_size <- as.factor(c(200, 300, 500, 1000, 1500))
 #sample_size <- as.factor(c(100, 150, 160, 180, 200))
 
 
-n_sim <- 10
+n_sim <- 300
 
 ## We vary three factors, and for the simulation study, we 
 ## cross-examine them through a nested for loop
 
 null_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
-                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA)
+                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA,
+                          TLI_Yang = NA, CFI_Yang = NA)
 
 set.seed(1248)
 
@@ -85,6 +86,8 @@ for(a in levels(test_length)){
     
       tli_values <- rep(NA, n_sim)
       cfi_values <- rep(NA, n_sim)
+      tli_yang <- rep(NA, n_sim)
+      cfi_yang <- rep(NA, n_sim)
       
       temp_n <- as.numeric(as.character(b))
       temp_k <- as.numeric(as.character(a))
@@ -106,10 +109,15 @@ for(a in levels(test_length)){
           
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
+          tli_yang[j] <- TLI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
+          cfi_yang[j] <- CFI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
+          
         }
       
       null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
-                                          mean(cfi_values), sd(cfi_values)))
+                                          mean(cfi_values), sd(cfi_values), 
+                                          mean(tli_yang), mean(cfi_yang)))
 
   }
   
@@ -121,7 +129,7 @@ rownames(null_results) <- NULL
 ## Now for miss-specification condition:
 
 alt_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
-                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA)
+                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA, TLI_Yang = NA)
 
 set.seed(1248)
 
@@ -131,6 +139,7 @@ for(a in levels(test_length)){
     
       tli_values <- rep(NA, n_sim)
       cfi_values <- rep(NA, n_sim)
+      tli_yang <- rep(NA, n_sim)
       
       temp_n <- as.numeric(as.character(b))
       temp_k <- as.numeric(as.character(a))
@@ -152,13 +161,15 @@ for(a in levels(test_length)){
           
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
-          print(tli_values[j])
+          tli_yang[j] <- TLI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
           
         
         }
       
-      alt_results <- rbind(alt_results, c(a, b, mean(tli_values), sd(tli_values),
-                                          mean(cfi_values), sd(cfi_values)))
+      alt_results <- rbind(alt_results, c(a, b, mean(tli_values,
+                                                     na.rm = TRUE), sd(tli_values, na.rm = TRUE),
+                                          mean(cfi_values, na.rm = TRUE), sd(cfi_values, na.rm = TRUE),
+                                          mean(tli_yang, na.rm = TRUE)))
 
   }
   
@@ -172,56 +183,5 @@ rownames(alt_results) <- NULL
 
 ```{r}
 sessionInfo()
-```
-
-        
-```{r}
-set.seed(1248)
-
-for(a in levels(test_length)){
-
-  for(b in levels(sample_size)){
-    
-      tli_values <- rep(NA, n_sim)
-      cfi_values <- rep(NA, n_sim)
-      
-      temp_n <- as.numeric(as.character(b))
-      temp_k <- as.numeric(as.character(a))
-      
-        j <- 1
-        
-        
-        while(j < n_sim + 1){
-        ## Then, for every condition, generate data according to the
-        ## current condition
-
-          temp_data <- data.gen(n = temp_n, k = temp_k, model = "2PL")
-                        
-          l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
-          
-          aggr_data <- temp_data %>%
-                        as.data.frame(.) %>%
-                        mutate(fr = rep(1, temp_n)) %>%
-                        aggregate(fr ~ ., data = ., sum)
-          
-          tli_values[j] <- TLI4(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-          cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-       
-          
-          j <- j + 1
-       
-        }
-      
-      null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
-                                          mean(cfi_values), sd(cfi_values)))
-
-  }
-  
-}
-
-null_results <- null_results[-1 ,]
-rownames(null_results) <- NULL
 ```
 
