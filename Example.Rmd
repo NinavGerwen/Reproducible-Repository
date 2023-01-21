@@ -18,6 +18,7 @@ source("Functions/model-calculations.R")
 source("Functions/data-generation.R")
 source("Functions/missingness.R")
 source("Functions/fit-indices calculations.R")
+source("Functions/data-aggregation.R")
 
 ```
 
@@ -62,126 +63,83 @@ require(dplyr)
 ## MAGRITTR for the pipe
 require(magrittr)
 
+## Here, you can define the levels of the factors you want to investigate
+## for the simulation study,
 test_length <- as.factor(c(5, 10, 20))
 sample_size <- as.factor(c(200, 300, 500, 1000, 1500))
 
-#test_length <- as.factor(c(5, 3, 4))
-#sample_size <- as.factor(c(100, 150, 160, 180, 200))
-
-
+## And you set the number of replications you want
 n_sim <- 300
 
-## We vary three factors, and for the simulation study, we 
-## cross-examine them through a nested for loop
-
+## Our output will be a data frame with first the conditions, and then the
+## results, and we pre-define the data frame here with some NAs
 null_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
-                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA,
-                          TLI_Yang = NA, CFI_Yang = NA)
+                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA)
 
+## Then set a seed for reproducibility
 set.seed(1248)
 
+## And now we start a nested for loop for the study
+
+## With first a for loop for both factors
 for(a in levels(test_length)){
 
   for(b in levels(sample_size)){
-    
+      
+      ## Then, in every condition, you create an empty vector of size
+      ## equal to the number of replications for the fit indices
       tli_values <- rep(NA, n_sim)
       cfi_values <- rep(NA, n_sim)
-      tli_yang <- rep(NA, n_sim)
-      cfi_yang <- rep(NA, n_sim)
       
+      ## You get the correct level of the factors as numerics
       temp_n <- as.numeric(as.character(b))
       temp_k <- as.numeric(as.character(a))
       
+        ## And then you get results for every condition by for every
+        ## replication, doing the following:
         for(j in 1:n_sim){
-        ## Then, for every condition, generate data according to the
-        ## current condition
-
+    
+          ## Generating data according to the factors
           temp_data <- data.gen(n = temp_n, k = temp_k, model = "2PL")
                         
+          ## Fitting the hypothesized model
           l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
           
-          aggr_data <- temp_data %>%
-                        as.data.frame(.) %>%
-                        mutate(fr = rep(1, temp_n)) %>%
-                        aggregate(fr ~ ., data = ., sum)
+          ## Aggregrating the data
+          aggr_data <- score.pattern.aggr(temp_data, temp_n)
           
+          ## And then calculating the TLI and CFI values through our
+          ## specialized functions
           tli_values[j] <- TLI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
           cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
           
-          tli_yang[j] <- TLI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-          cfi_yang[j] <- CFI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
         }
       
+      ## Then, after the values have been calculated n_sim times, 
+      ## we can get their mean and standard deviation and add these
+      ## to the result dataframe through rbind()
       null_results <- rbind(null_results, c(a, b, mean(tli_values), sd(tli_values),
-                                          mean(cfi_values), sd(cfi_values), 
-                                          mean(tli_yang), mean(cfi_yang)))
+                                          mean(cfi_values), sd(cfi_values)))
 
   }
   
 }
 
+## Now we just have to clean up the dataframe by removing the first row
 null_results <- null_results[-1 ,]
+## And resetting the rownames
 rownames(null_results) <- NULL
 
-## Now for miss-specification condition:
-
-alt_results <- data.frame(test_length = NA, sample_size = NA, TLI_M = NA,
-                          TLI_SE = NA, CFI_M = NA, CFI_SE = NA, TLI_Yang = NA)
-
-set.seed(1248)
-
-for(a in levels(test_length)){
-
-  for(b in levels(sample_size)){
-    
-      tli_values <- rep(NA, n_sim)
-      cfi_values <- rep(NA, n_sim)
-      tli_yang <- rep(NA, n_sim)
-      
-      temp_n <- as.numeric(as.character(b))
-      temp_k <- as.numeric(as.character(a))
-      
-        for(j in 1:n_sim){
-        ## Then, for every condition, generate data according to the
-        ## current condition
-
-          temp_data <- data.gen(n = temp_n, k = temp_k, model = "3PL")
-                        
-          l_0 <- ltm(temp_data ~ z1, IRT.param = TRUE)$log.Lik
-          
-          aggr_data <- temp_data %>%
-                        as.data.frame(.) %>%
-                        mutate(fr = rep(1, temp_n)) %>%
-                        aggregate(fr ~ ., data = ., sum)
-          
-          tli_values[j] <- TLI(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-          cfi_values[j] <- CFI(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-          tli_yang[j] <- TLI_Cai_Calc(l_0, temp_data, aggr_data, temp_n, temp_k)
-          
-        
-        }
-      
-      alt_results <- rbind(alt_results, c(a, b, mean(tli_values,
-                                                     na.rm = TRUE), sd(tli_values, na.rm = TRUE),
-                                          mean(cfi_values, na.rm = TRUE), sd(cfi_values, na.rm = TRUE),
-                                          mean(tli_yang, na.rm = TRUE)))
-
-  }
-  
-}
-
-alt_results <- alt_results[-1 ,]
-rownames(alt_results) <- NULL
-
+## And tada! your results for the 'null-condition'
+null_results
 ```
 
+These results show what values the TLI has on average when the hypothesized
+model is also the true model. 
 
 ```{r}
+## For reproducibility, we include the sessionInfo
 sessionInfo()
 ```
 
