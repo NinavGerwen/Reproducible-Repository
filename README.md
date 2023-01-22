@@ -16,8 +16,8 @@ to run the simulation study. Optionally, to render the LaTeX file yourself, a Te
 | ------------------	| ------------- |
 | Example.rmd		| Rmarkdown file that runs an example simulation study that uses simulated dichotomous questionnaire data |
 | Example.html		| Knitted version of the Rmarkdown file with the example simulation study |
-| Functions		| Folder containing annotated functions used to generate data by '1.Example.R'|
-| Example-Manuscript.pdf| A rendered LaTeX file that uses the results of the Example.rmd file in their results (Table 4)|
+| Functions		| Folder containing annotated functions used to generate data as examplified by'Example.Rmd'|
+| Example-Manuscript.pdf| A rendered LaTeX file that uses the results of the Example.rmd file in their results for Table 4|
 | Example-Manuscript.tex| The .tex file that was used to render the Example-Manuscript.pdf file|
 | Manuscript-Files	| Folder containing the necessary bibliography and documentclass file to render Example-Manuscript.pdf|
 
